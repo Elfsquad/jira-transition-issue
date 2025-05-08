@@ -1,9 +1,11 @@
 {
   "name": "jira-transition-issue",
   "version": "1.0.0",
-  "description": "",
+  "description": "- client-email:\n    - description: The email address of the Jira user for Basic Auth\n    - required: true\n- client-token:\n    - description: The API token for the Jira user\n    - required: true\n- base-url:\n    - description: The base URL of your Jira Cloud instance (e.g. https://elfsquad.atlassian.net)\n    - required: true\n- issue-key:\n    - description: The key of the Jira issue to transition (e.g. PROJ-123)\n    - required: true\n- transition-status:\n    - description: The name of the status to transition to (e.g. REVERTED, IN PROGRESS)\n    - required: true\n- continue-on-error:\n    - description: If true, the action will not fail the workflow on error\n    - required: false\n# Outputs\n- issue-key:\n    - description: The key of the Jira issue that was transitioned\n- transition-status:\n    - description: The status to which the issue was transitioned",
   "main": "index.js",
   "scripts": {
+    "build": "ncc build index.js --license LICENSE",
+    "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,6 +21,10 @@
   "homepage": "https://github.com/Elfsquad/jira-transition-issue#readme",
   "dependencies": {
     "@actions/core": "^1.11.1",
-    "@actions/github": "^6.0.1"
+    "@actions/github": "^6.0.1",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.3"
   }
 }
