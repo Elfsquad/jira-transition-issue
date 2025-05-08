@@ -1,0 +1,38 @@
+name: Jira Issue Transition
+description: This action transitions a Jira issue to a new status.
+branding:
+  icon: git-merge
+  color: blue
+inputs:
+  client-email:
+    description: The email address of the user to authenticate with
+    required: true
+  client-token:
+    description: The API token for the user to authenticate with
+    required: true
+  base-url:
+    description: Base url of your Jira instance
+    required: true
+  issue-key:
+    description: 'The key of the Jira issue to transition.'
+    required: true
+  transition-status:
+    description: 'The status to transition the issue to.'
+    required: true
+  continue-on-error:
+    description: 'Continue on error.'
+    required: false
+    default: false
+outputs:
+  issue-key:
+    description: 'The key of the Jira issue that was transitioned.'
+  transition-status:
+    description: 'The status to which the issue was transitioned.'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
+  post:
+    - name: 'Post to Slack'
+      if: ${{ inputs.continue-on-error == 'true' }}
+      run: |
+        echo "The action failed, but continue on error is set to true. Proceeding with the next steps."
