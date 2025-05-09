@@ -8,15 +8,15 @@ This GitHub Action supports adding comments and updating fields during the trans
 
 ## 📑 Table of Contents
 
-- [Features](#features)  
-- [Inputs](#inputs)  
-- [Outputs](#outputs)  
-- [Example Workflow](#example-workflow)  
-- [Prerequisites](#prerequisites)  
-- [Setup](#setup)  
-- [Contributing](#contributing)  
-- [License](#license)  
-- [Acknowledgements](#acknowledgements)  
+- [Features](#-features-)  
+- [Inputs](#-inputs-)  
+- [Outputs](#-outputs-)  
+- [Example Workflow](#-example-workflow-)  
+- [Prerequisites](#-prerequisites-)  
+- [Setup](#-setup-)  
+- [Contributing](#-contributing-)  
+- [License](#-license-)  
+- [Acknowledgements](#-acknowledgements-)  
 
 ---
 
