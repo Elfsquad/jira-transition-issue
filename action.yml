@@ -13,11 +13,11 @@ inputs:
   base-url:
     description: Base url of your Jira instance
     required: true
-  issue-key:
-    description: The key of the Jira issue to transition
+  issue-keys:
+    description: The keys of the Jira issues to transition
     required: true
   transition-status:
-    description: The status to transition the issue to
+    description: The status to transition the issues to
     required: true
   transition-comment:
     description: Automated comment to post on each transitioned issue
@@ -30,7 +30,7 @@ inputs:
     required: false
     default: false
 outputs:
-  issue-key:
+  issue-keys:
     description: The key of the Jira issue that was transitioned.
   transition-status:
     description: The status to which the issue was transitioned.
