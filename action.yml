@@ -14,25 +14,28 @@ inputs:
     description: Base url of your Jira instance
     required: true
   issue-key:
-    description: 'The key of the Jira issue to transition.'
+    description: The key of the Jira issue to transition
     required: true
   transition-status:
-    description: 'The status to transition the issue to.'
+    description: The status to transition the issue to
     required: true
+  transition-comment:
+    description: Automated comment to post on each transitioned issue
+    required: false
+  update-fields:
+    description: Update fields of the issue to transition(e.g. Description, Name, or other custom fields, such as Priority or Project). Please provide these fields in JSON format
+    required: false
   continue-on-error:
-    description: 'Continue on error.'
+    description: Continue on error
     required: false
     default: false
 outputs:
   issue-key:
-    description: 'The key of the Jira issue that was transitioned.'
+    description: The key of the Jira issue that was transitioned.
   transition-status:
-    description: 'The status to which the issue was transitioned.'
+    description: The status to which the issue was transitioned.
+  status:
+    description: The status of the ran action.
 runs:
   using: 'node12'
   main: 'dist/index.js'
-  post:
-    - name: 'Post to Slack'
-      if: ${{ inputs.continue-on-error == 'true' }}
-      run: |
-        echo "The action failed, but continue on error is set to true. Proceeding with the next steps."

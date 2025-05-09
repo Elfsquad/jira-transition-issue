@@ -31833,9 +31833,17 @@ const github = __nccwpck_require__(3228);
 
 const continueOnError = core.getInput('continue-on-error') === 'true';
 
-const getIssueKey = () => core.getInput('issue-key').split(',')[0].trim();
+const getBaseUrl = () => core.getInput('base-url');
+const getClientEmail = () => core.getInput('client-email');
+const getClientToken = () => core.getInput('client-token');
+const getIssueKeys = () => core.getInput('issue-keys')
+                              .split(',')
+                              .map(key => key.trim());
 
 const getTransitionStatus = () => core.getInput('transition-status');
+
+const getTransitionComment = () => core.getInput('transition-comment');
+const getUpdateFields = () => core.getInput('update-fields');
 
 const validateState = (value) => {
     const allowedValues = [
@@ -31848,21 +31856,8 @@ const validateState = (value) => {
     throw new Error(`'${value}' is not a valid state.`);
   }
 
-const validateIssueKey = (value) => {
-    if(value != "" && value != null && value != undefined){
-        return;
-    }
-    throw new Error('No issue keys provided, at least one issue key is required.');
-}
 
-const validateTransitionStatus = (value) => {
-    if(value != "" && value != null && value != undefined){
-        return;
-    }
-    throw new Error('No transition status provided, at least one transition status is required.');
-}
-
-function basicAuthHeader(email, token) {
+const basicAuthHeader = (email, token) => {
     const creds = Buffer.from(`${email}:${token}`).toString('base64');
     return `Basic ${creds}`;
 }
@@ -31922,16 +31917,13 @@ const getTransitionId = async (baseUrl, auth, issueKey, targetStatus) => {
     return parseInt(match.id, 10);
 }
     
-const transitionIssue = async (baseUrl, auth, issueKey, transitionId) => {
-    const url = `${baseUrl}/rest/api/2/issue/${issueKey}/transitions`;
-    core.info(`Transitioning ${issueKey} to "${transitionId}"...`);
-    core.info(`URL: ${url}`);
+const transitionIssue = async (baseUrl, auth, issueKeys, transitionId) => {
+    const url = `${baseUrl}/rest/api/2/issue/${issueKeys}/transitions`;
     const transitionBody = {
         transition: { id: transitionId }
     };
     const json = JSON.stringify(transitionBody, null, 2);
 
-    core.info(`Body:  ${json}`);
     const res = await fetch(url, {
         method: 'POST',
         headers: {
@@ -31946,53 +31938,94 @@ const transitionIssue = async (baseUrl, auth, issueKey, transitionId) => {
       }
 }
 
+const updateIssueFields = async (baseUrl, auth, issueKey, fieldsToUpdate) => {
+  const url = `${baseUrl}/rest/api/3/issue/${issueKey}`;
+  const transitionBody = {};
+  if (fieldsToUpdate?.fields) {
+    transitionBody.fields = fieldsToUpdate.fields;
+  }
+  
+  const json = JSON.stringify(transitionBody, null, 2);
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      Authorization: auth,
+      'Content-Type': 'application/json'
+    },
+    body: json
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`PUT issue fields failed (${res.status}): ${err}`);
+  }
+}
+
+const updateIssueComment = async (baseUrl, auth, issueKey, comment) => {
+  const url = `${baseUrl}/rest/api/2/issue/${issueKey}/comment`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: auth,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ body: comment })
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`POST comment failed (${res.status}): ${err}`);
+  }
+}
+
 (async function(){
     try{
-        const baseUrl = core.getInput('base-url');
-        const clientEmail = core.getInput('client-email');
-        const clientToken = core.getInput('client-token');
-        const issueKey = getIssueKey();
+        const baseUrl = getBaseUrl();
+        const clientEmail = getClientEmail();
+        const clientToken = getClientToken();
+        const issueKeys = getIssueKeys();
         const desiredStatus = getTransitionStatus();
+        const transitionComment = getTransitionComment();
+        const updateFields = getUpdateFields();
         const auth = basicAuthHeader(clientEmail, clientToken);
 
-        core.info(`📦 Fetching transition ID for "${desiredStatus}"...`);
-        const transitionId = await getTransitionId(
-          baseUrl,
-          auth,
-          issueKey,
-          desiredStatus
-        );
 
-        core.info(`🚀 Sending transition request...`);
-        await transitionIssue(         
-          baseUrl,
-          auth,
-          issueKey,
-          transitionId
-        );
+        core.info(`📦 Fetching transition ID(s) for "${desiredStatus}"...`);
+        for (const key of issueKeys) {
+          const transitionId = await getTransitionId(baseUrl, auth, key, desiredStatus);
+          await transitionIssue(baseUrl, auth, key, transitionId);
+          if(updateFields) {
+            await updateIssueFields(baseUrl, auth, key, JSON.parse(updateFields));
+          }
+          if (transitionComment) {
+            await updateIssueComment(baseUrl, auth, key, transitionComment);
+          }
+          core.info(`✅ ${key} moved to ${desiredStatus}`);
+        }
 
-        core.info(`📨 Fetching updated status for issue ${issueKey}...`);
+
+        core.info(`📨 Fetching updated status for issue(s) ${issueKeys}...`);
         const finalStatus = await getUpdatedStatus(          
           baseUrl,
           auth,
-          issueKey
+          issueKeys[0]
         );
 
         if (finalStatus.toUpperCase() !== desiredStatus.toUpperCase()) {
           throw new Error(`Transition mismatch: issue is now '${finalStatus}', expected '${desiredStatus}'`);
         }
 
-        core.info(`✅ Successfully transitioned ${issueKey} to '${finalStatus}'`);
-        core.setOutput('issue-key', issueKey);
+        core.info(`✅ Successfully transitioned ${issueKeys.join(',')} to '${finalStatus}'`);
+        core.setOutput('issue-keys', issueKeys.join(','));
         core.setOutput('transition-status', finalStatus);
+        core.setOutput('status', 'success');
     } catch (error) {
         if(!continueOnError){
             core.setFailed(error.message);
         }
         else{
-            core.setOutput('issue-key', '');
+            core.setOutput('issue-keys', '');
             core.setOutput('transition-status', '');
         }
+        core.setOutput('status', 'failure');
     }
 })();
 module.exports = __webpack_exports__;

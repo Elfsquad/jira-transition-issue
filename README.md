@@ -2,8 +2,9 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-Easily move Jira issues to any status directly from your GitHub workflows.  
-This action uses Basic Authentication (email + API token) to securely update Jira Cloud issues.
+Easily move Jira issues to a new status as part of your GitHub workflows.
+This GitHub Action supports adding comments and updating fields during the transition, using secure Basic Authentication (email + API token) with Jira Cloud.
+
 
 ## 📑 Table of Contents
 
@@ -24,6 +25,8 @@ This action uses Basic Authentication (email + API token) to securely update Jir
 - 🔐 Securely authenticate with Jira via Basic Auth  
 - 🔁 Get and apply valid transitions for a given issue  
 - ✅ Seamlessly update issues as part of your CI/CD pipeline  
+- 💬 Optional: Add comments to issues as part of the transition
+- 📝 Optional: Update custom fields during the workflow
 - 🚧 Optional: allow your pipeline to continue even when Jira fails   
 
 ---
@@ -37,7 +40,9 @@ This action uses Basic Authentication (email + API token) to securely update Jir
 | `base-url`          | Your Jira Cloud site URL (e.g. `https://your-org.atlassian.net`)                                | ✅ yes   |         |
 | `issue-key`         | The Jira issue key to update (e.g. `PROJ-123`)                                                  | ✅ yes   |         |
 | `transition-status` | Desired status name to move the issue into (e.g. `REVERTED`, `DONE`)                           | ✅ yes   |         |
-| `continue-on-error` | If `true`, skips failure when Jira transition fails                                             | ❌ no    | `false` |
+`transition-comment`| *(Optional)* A comment to add after transitioning each issue                                                   |❌ no    |         |
+| `update-fields`     | *(Optional)* JSON string of fields to update, e.g. `{"fields":{"customfield_10010":"value"}}`                  |❌ no    |         |
+| `continue-on-error` | *(Optional)* If `true`, skips failure when Jira transition fails                                             | ❌ no    | `false` |
 
 ---
 
@@ -47,6 +52,8 @@ This action uses Basic Authentication (email + API token) to securely update Jir
 |---------------------|----------------------------------------------------|
 | `issue-key`         | The key of the issue that was updated              |
 | `transition-status` | The status the issue was moved to                  |
+| `status`            | `success` or `failure` indicating overall action result        |
+
 
 ---
 
@@ -73,6 +80,8 @@ jobs:
           base-url: 'https://your-org.atlassian.net'
           issue-key: 'PROJ-14235'
           transition-status: 'REVERTED'
+          transition-comment: 'Moving to testing phase per CI pipeline.'
+          update-fields: '{"fields":{"priority":{"id":"3"}}}'
           continue-on-error: false
 ```
 
@@ -82,11 +91,11 @@ jobs:
 
 Make sure you have the following:
 
-    A Jira Cloud account with access to the target issue(s)
+- A Jira Cloud account with access to the target issue(s)
 
-    An API token from id.atlassian.com
+- An API token from id.atlassian.com
 
-    Secrets (JIRA_USER_EMAIL, JIRA_API_TOKEN) added to your GitHub repo
+- Secrets (JIRA_USER_EMAIL, JIRA_API_TOKEN) added to your GitHub repo
 
 
 ---
